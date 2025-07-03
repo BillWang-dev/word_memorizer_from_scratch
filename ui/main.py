@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import logging
+import sv_ttk
 
 logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger(__name__)
@@ -8,6 +9,9 @@ logger = logging.getLogger(__name__)
 class MainApplication:
     def __init__(self):
         self.root = tk.Tk()
+
+        sv_ttk.use_light_theme() #选择UI的主题
+        
         self.root.title("我的单词记忆程序") #窗口标题
         self.root.geometry("1000x700") # 窗口大小
         self._create_main_interface() #调用方法, 创建主界面
@@ -85,17 +89,12 @@ class DictationInterface:
                    command=lambda: self._button_clicked("跳过")).pack(side=tk.RIGHT, padx=(0, 10))
 
         # 内容显示区域
-        tk.Label(main_frame, text = "听写内容", font = ('Arial', 10, 'bold')).pack(
-            anchor=tk.W, pady=(10, 5)
-        )
-        self.content_frame = ttk.Frame(main_frame, padding="15")
+        self.content_frame = ttk.LabelFrame(main_frame, text="听写内容", padding="20")
         self.content_frame.pack(fill=tk.X, pady=(0, 20))
-    
+
+
         # 音频控制区域
-        tk.Label(main_frame, text = "音频控制", font = ('Arial', 10, 'bold')).pack(
-            anchor=tk.W, pady=(10, 5)
-        )
-        self.audio_frame = ttk.Frame(main_frame, padding = "15")
+        self.audio_frame = ttk.LabelFrame(main_frame, text = "音频控制", padding="20")
         self.audio_frame.pack(fill=tk.X, pady=(0, 20))
 
         self.play_button = ttk.Button(self.audio_frame, text="🔊 播放", 
@@ -106,10 +105,7 @@ class DictationInterface:
                    command=lambda: self._button_clicked("重播")).pack(side=tk.LEFT, padx=(0, 10))
         
         # 答案输入区域
-        tk.Label(main_frame, text = "答案输入", font = ('Arial', 10, 'bold')).pack(
-            anchor=tk.W, pady=(10, 5)
-        )
-        self.answer_frame = ttk.Frame(main_frame, padding = "15")
+        self.answer_frame = ttk.LabelFrame(main_frame,text="答案输入", padding="20")
         self.answer_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
         self.answer_input = tk.Entry(self.answer_frame, font=('Arial', 12))
@@ -125,9 +121,7 @@ class DictationInterface:
         self.submit_button.pack(side=tk.LEFT)
         
         #结果显示:
-        ttk.Label(main_frame, text="结果", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(10, 5))
-        
-        self.result_frame = ttk.Frame(main_frame, padding="15")
+        self.result_frame = ttk.LabelFrame(main_frame, text="结果显示", padding="20")
         self.result_frame.pack(fill=tk.X)
         
         self.result_text = scrolledtext.ScrolledText(self.result_frame, height=4, wrap=tk.WORD,
