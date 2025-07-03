@@ -106,25 +106,24 @@ class DictationInterface:
         ttk.Button(audio_frame, text="🔁 重播", 
                    command=lambda: self._button_clicked("重播")).pack(side=tk.LEFT, padx=(0, 10))
 
-     
 
          # 答案输入区域
         answer_frame = ttk.LabelFrame(main_frame, text="答案输入", padding="15")
         answer_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
 
-        # ttk.Label(answer_frame, text="请输入您听到的内容:").pack(anchor=tk.W)
-        # self.answer_input = scrolledtext.ScrolledText(answer_frame, height=4, wrap=tk.WORD,
-        #                                             font=('Arial', 12))
-        # self.answer_input.pack(fill=tk.X, pady=(5, 10))
-        #
-        # submit_frame = ttk.Frame(answer_frame)
-        # submit_frame.pack(fill=tk.X)
-        #
+        ttk.Label(answer_frame, text="请输入您听到的内容:").pack(anchor=tk.W) #提示文字, 左对齐
+        self.answer_input = tk.Entry(answer_frame, font=('Arial', 12))
+        self.answer_input.pack(fill=tk.X, pady=(5, 10))
+
+
+        submit_frame = ttk.Frame(answer_frame)
+        submit_frame.pack(fill=tk.X)
+
         # # 【修改点】提交按钮的 command
-        # self.submit_button = ttk.Button(submit_frame, text="✅ 提交答案", 
-        #                                 command=lambda: self._button_clicked("提交答案"))
-        # self.submit_button.pack(side=tk.LEFT)
-        #
+        self.submit_button = ttk.Button(submit_frame, text="✅ 提交答案", 
+        command=lambda: self._button_clicked("提交答案"))
+        self.submit_button.pack(side=tk.LEFT)
+
         # # 结果显示区域
         # self.result_frame = ttk.LabelFrame(main_frame, text="结果", padding="15")
         # self.result_frame.pack(fill=tk.X)
