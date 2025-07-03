@@ -9,7 +9,7 @@ class MainApplication:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("我的单词记忆程序") #窗口标题
-        self.root.geometry("800x600") # 窗口大小
+        self.root.geometry("1000x700") # 窗口大小
         self._create_main_interface() #调用方法, 创建主界面
 
     def _create_main_interface(self):
@@ -45,32 +45,25 @@ class DictationInterface:
         self._create_widgets() #在当前界面创建一些控件 
         
         # 设置一些初始的提示文字
-        #self._setup_initial_display()
+        self._setup_initial_display()
 
     def _button_clicked(self, button_name: str): # 没有任何实际功能
         print(f"'{button_name}' 按钮被点击了")
 
-    # def _volume_changed(self, value: str):
-    #     """
-    #     专门为音量滑动条准备的占位函数。
-    #     """
-    #     # 从滑动条获取的值是字符串，我们转成浮点数再格式化输出
-    #     print(f"音量被调整为: {float(value):.2f}")
-    #
-    # def _setup_initial_display(self):
-    #     """
-    #     设置界面上各个区域的初始提示文本。
-    #     """
-    #     # 在“听写内容”区域显示提示
-    #     info_text = "这里会显示单词的提示信息，例如：\n含义: 苹果\n音标: /ˈæp.əl/"
-    #     ttk.Label(self.content_frame, text=info_text, font=('Arial', 12)).pack(anchor=tk.W)
-    #
-    #     # 在“结果”区域显示提示
-    #     self.result_text.config(state=tk.NORMAL) # 先设为可编辑
-    #     self.result_text.delete(1.0, tk.END) # 清空内容
-    #     self.result_text.insert(1.0, "提交答案后，这里会显示对错结果。") # 插入提示文字
-    #     self.result_text.config(state=tk.DISABLED) # 再设为不可编辑
-    #
+    def _setup_initial_display(self):
+        """
+        设置界面上各个区域的初始提示文本。
+        """
+        # 在“听写内容”区域显示提示
+        info_text = "这里会显示单词的提示信息，例如：\n含义: 苹果\n音标: /ˈæp.əl/"
+        ttk.Label(self.content_frame, text=info_text, font=('Arial', 12)).pack(anchor=tk.W)
+
+        # 在“结果”区域显示提示
+        self.result_text.config(state=tk.NORMAL) # 先设为可编辑
+        self.result_text.delete(1.0, tk.END) # 清空内容
+        self.result_text.insert(1.0, "提交答案后，这里会显示对错结果。") # 插入提示文字
+        self.result_text.config(state=tk.DISABLED) # 再设为不可编辑
+
     def _create_widgets(self):
         """
         创建界面组件 (核心部分)。
@@ -92,46 +85,54 @@ class DictationInterface:
                    command=lambda: self._button_clicked("跳过")).pack(side=tk.RIGHT, padx=(0, 10))
 
         # 内容显示区域
-        self.content_frame = ttk.LabelFrame(main_frame, text="听写内容", padding="20")
+        tk.Label(main_frame, text = "听写内容", font = ('Arial', 10, 'bold')).pack(
+            anchor=tk.W, pady=(10, 5)
+        )
+        self.content_frame = ttk.Frame(main_frame, padding="15")
         self.content_frame.pack(fill=tk.X, pady=(0, 20))
     
         # 音频控制区域
-        audio_frame = ttk.LabelFrame(main_frame, text="音频控制", padding="15")
-        audio_frame.pack(fill=tk.X, pady=(0, 20))
+        tk.Label(main_frame, text = "音频控制", font = ('Arial', 10, 'bold')).pack(
+            anchor=tk.W, pady=(10, 5)
+        )
+        self.audio_frame = ttk.Frame(main_frame, padding = "15")
+        self.audio_frame.pack(fill=tk.X, pady=(0, 20))
 
-        self.play_button = ttk.Button(audio_frame, text="🔊 播放", 
+        self.play_button = ttk.Button(self.audio_frame, text="🔊 播放", 
                                       command=lambda: self._button_clicked("播放"))
         self.play_button.pack(side=tk.LEFT, padx=(0, 10))
 
-        ttk.Button(audio_frame, text="🔁 重播", 
+        ttk.Button(self.audio_frame, text="🔁 重播", 
                    command=lambda: self._button_clicked("重播")).pack(side=tk.LEFT, padx=(0, 10))
-
-
-         # 答案输入区域
-        answer_frame = ttk.LabelFrame(main_frame, text="答案输入", padding="15")
-        answer_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
-
-        ttk.Label(answer_frame, text="请输入您听到的内容:").pack(anchor=tk.W) #提示文字, 左对齐
-        self.answer_input = tk.Entry(answer_frame, font=('Arial', 12))
+        
+        # 答案输入区域
+        tk.Label(main_frame, text = "答案输入", font = ('Arial', 10, 'bold')).pack(
+            anchor=tk.W, pady=(10, 5)
+        )
+        self.answer_frame = ttk.Frame(main_frame, padding = "15")
+        self.answer_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        self.answer_input = tk.Entry(self.answer_frame, font=('Arial', 12))
         self.answer_input.pack(fill=tk.X, pady=(5, 10))
 
 
-        submit_frame = ttk.Frame(answer_frame)
+        submit_frame = ttk.Frame(self.answer_frame)
         submit_frame.pack(fill=tk.X)
 
-        # # 【修改点】提交按钮的 command
+        # 提交按钮
         self.submit_button = ttk.Button(submit_frame, text="✅ 提交答案", 
         command=lambda: self._button_clicked("提交答案"))
         self.submit_button.pack(side=tk.LEFT)
-
-        # # 结果显示区域
-        # self.result_frame = ttk.LabelFrame(main_frame, text="结果", padding="15")
-        # self.result_frame.pack(fill=tk.X)
-        #
-        # self.result_text = scrolledtext.ScrolledText(self.result_frame, height=4, wrap=tk.WORD,
-        #                                            font=('Arial', 10), state=tk.DISABLED)
-        # self.result_text.pack(fill=tk.X)
-        #
+        
+        #结果显示:
+        ttk.Label(main_frame, text="结果", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=(10, 5))
+        
+        self.result_frame = ttk.Frame(main_frame, padding="15")
+        self.result_frame.pack(fill=tk.X)
+        
+        self.result_text = scrolledtext.ScrolledText(self.result_frame, height=4, wrap=tk.WORD,
+                                                   font=('Arial', 10), state=tk.DISABLED)
+        self.result_text.pack(fill=tk.X)
 
 #程序入口
 if __name__ == "__main__":
