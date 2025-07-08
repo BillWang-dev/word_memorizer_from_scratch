@@ -1,7 +1,14 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import DISABLED, ttk, messagebox, scrolledtext
 import logging
 import sv_ttk
+
+import sys
+import os
+import ipdb
+sys.path.append(os.path.dirname(os.path.dirname(__file__))) # 工作目录定义为根目录
+
+from logic.core import MemorizerCore, WordItem
 
 logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,6 +21,10 @@ class MainApplication:
         
         self.root.title("我的单词记忆程序") #窗口标题
         self.root.geometry("1000x700") # 窗口大小
+        # 初始化核心组件
+        self.core = MemorizerCore()
+        self.core.initialize()
+        
         self._create_main_interface() #调用方法, 创建主界面
 
     def _create_main_interface(self):
@@ -28,7 +39,7 @@ class MainApplication:
         self.notebook.add(self.word_frame, text="📝 单词听写") #向 Notebook（标签页容器）中添加一个新的标签页
         
         #把复杂的听写界面封装在了另一个类 DictationInterface 中
-        self.word_dictation = DictationInterface(self.word_frame)
+        self.word_dictation = DictationInterface(self.word_frame, self.core)
         
 
         # 统计页面
@@ -39,17 +50,35 @@ class MainApplication:
         self.root.mainloop() #是一个循环, 让窗口一直显示
 
 class DictationInterface:
-    def __init__(self, parent_frame):
+    def __init__(self, parent_frame, core: MemorizerCore):
         """
         构造函数。现在它只需要一个 parent_frame，因为不需要核心逻辑了。
         """
         self.parent_frame = parent_frame  # 在单词听写页面下
-        
+        self.current_item = None
+        self.core = core
+        self.answer_submitted = False
         # 直接调用创建界面的方法
         self._create_widgets() #在当前界面创建一些控件 
         
         # 设置一些初始的提示文字
-        self._setup_initial_display()
+        self._load_next_item()
+    
+    def _load_next_item(self):
+        self.current_item = self.core.get_next_review_item("word")
+        if self.current_item is None:
+            messagebox.showinfo("所有单词已复习完成")
+            return
+        self._display_next_item()
+
+    def _display_next_item(self):
+        for widget in self.content_frame.winfo_children():
+            widget.destroy()
+        info_text = f"单词听写, 含义:{self.current_item.meaning}"
+        if self.current_item.pronunciation:
+            info_text += f"\n音标:{self.current_item.pronunciation}"
+        ttk.Label(self.content_frame, text = info_text, font = ('Arial', 12), justify=tk.LEFT).pack(anchor=tk.W)
+        
 
     def _button_clicked(self, button_name: str): # 没有任何实际功能
         print(f"'{button_name}' 按钮被点击了")
@@ -87,11 +116,9 @@ class DictationInterface:
                    command=lambda: self._button_clicked("下一个")).pack(side=tk.RIGHT)
         ttk.Button(control_frame, text="跳过", 
                    command=lambda: self._button_clicked("跳过")).pack(side=tk.RIGHT, padx=(0, 10))
-
-        # 内容显示区域
+        # 听写内容显示区域
         self.content_frame = ttk.LabelFrame(main_frame, text="听写内容", padding="20")
         self.content_frame.pack(fill=tk.X, pady=(0, 20))
-
 
         # 音频控制区域
         self.audio_frame = ttk.LabelFrame(main_frame, text = "音频控制", padding="20")
@@ -117,7 +144,7 @@ class DictationInterface:
 
         # 提交按钮
         self.submit_button = ttk.Button(submit_frame, text="✅ 提交答案", 
-        command=lambda: self._button_clicked("提交答案"))
+        command = self._submit_answer)
         self.submit_button.pack(side=tk.LEFT)
         
         #结果显示:
@@ -128,6 +155,35 @@ class DictationInterface:
                                                    font=('Arial', 10), state=tk.DISABLED)
         self.result_text.pack(fill=tk.X)
 
+    def _submit_answer(self):
+        user_answer = self.answer_input.get().strip()
+        if not user_answer:
+            messagebox.showwarning("提示", "请输入您听到的内容")
+            return
+        correct_answer = self.current_item.word
+        is_correct = self.compare_texts(correct_answer, user_answer)
+        
+        if not self.answer_submitted:
+            self.core.submit_answer(self.current_item, is_correct)
+            self.answer_submitted = True
+        self._display_result(is_correct, correct_answer, user_answer)
+
+    def _display_result(self, is_correct, correct:str, user_answer: str):
+        self.result_text.config(state = tk.NORMAL)
+        self.result_text.delete(1.0, tk.END)
+        
+        result_text = f"{'🎉正确! ' if is_correct else '❌ 错误'}\n"
+        result_text += f"正确答案:{correct}\n"
+        result_text += f"你的答案:{user_answer}\n"
+        
+        self.result_text.insert(1.0, result_text)
+        self.result_text.config(state = DISABLED)
+        
+
+        
+    def compare_texts(self, original: str, recognized: str)-> bool:
+        return original.strip().lower() == recognized.strip().lower()
+        
 #程序入口
 if __name__ == "__main__":
     try:
