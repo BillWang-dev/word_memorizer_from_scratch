@@ -2,13 +2,12 @@ import tkinter as tk
 from tkinter import DISABLED, ttk, messagebox, scrolledtext
 import logging
 import sv_ttk
-
 import sys
 import os
-import ipdb
 sys.path.append(os.path.dirname(os.path.dirname(__file__))) # 工作目录定义为根目录
 
 from logic.core import MemorizerCore, WordItem
+from audio.listen import get_listen_engine
 
 logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,10 +57,10 @@ class DictationInterface:
         self.current_item = None
         self.core = core
         self.answer_submitted = False
-        # 直接调用创建界面的方法
+        self.listen_engine = get_listen_engine()
+
         self._create_widgets() #在当前界面创建一些控件 
         
-        # 设置一些初始的提示文字
         self._load_next_item()
     
     def _load_next_item(self):
@@ -109,7 +108,7 @@ class DictationInterface:
         control_frame = ttk.Frame(main_frame)
         control_frame.pack(fill=tk.X, pady=(0, 20))
         
-        ttk.Label(control_frame, text="🎧 单词听写 (静态演示)", 
+        ttk.Label(control_frame, text="🎧 单词听写", 
                  font=('Arial', 14, 'bold')).pack(side=tk.LEFT) #.pack(side = tk.LEFT) 从最左边开始布局 
         
         # command 指向了占位函数 _button_clicked
@@ -124,11 +123,11 @@ class DictationInterface:
         self.audio_frame.pack(fill=tk.X, pady=(0, 20))
 
         self.play_button = ttk.Button(self.audio_frame, text="🔊 播放", 
-                                      command=lambda: self._button_clicked("播放"))
+                                      command = self._play_audio) 
         self.play_button.pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Button(self.audio_frame, text="🔁 重播", 
-                   command=lambda: self._button_clicked("重播")).pack(side=tk.LEFT, padx=(0, 10))
+                   command=self._play_audio).pack(side=tk.LEFT, padx=(0, 10))
         
         # 答案输入区域
         self.answer_frame = ttk.LabelFrame(main_frame,text="答案输入", padding="20")
@@ -190,6 +189,15 @@ class DictationInterface:
         self.result_text.config(state=tk.DISABLED)
         # 重置按钮文本和状态
         self.submit_button.config(text="✅ 提交答案", state=tk.NORMAL)
+    def _play_audio(self):
+        if self.current_item is None:
+            return
+        text_to_play = self.current_item.word
+        def play_finished():
+            self.play_button.config(text="🔊 播放", state=tk.NORMAL)
+        self.play_button.config(text = "播放中...", state = tk.DISABLED)
+        self.listen_engine.play_text(text_to_play, callback=play_finished)
+
 
 #程序入口
 if __name__ == "__main__":
