@@ -69,6 +69,7 @@ class DictationInterface:
         if self.current_item is None:
             messagebox.showinfo("所有单词已复习完成")
             return
+        self._reset_interface()
         self._display_next_item()
 
     def _display_next_item(self):
@@ -113,9 +114,7 @@ class DictationInterface:
         
         # command 指向了占位函数 _button_clicked
         ttk.Button(control_frame, text="下一个", # 按钮的名称为“下一个  ” 
-                   command=lambda: self._button_clicked("下一个")).pack(side=tk.RIGHT)
-        ttk.Button(control_frame, text="跳过", 
-                   command=lambda: self._button_clicked("跳过")).pack(side=tk.RIGHT, padx=(0, 10))
+                   command=self._load_next_item).pack(side=tk.RIGHT)
         # 听写内容显示区域
         self.content_frame = ttk.LabelFrame(main_frame, text="听写内容", padding="20")
         self.content_frame.pack(fill=tk.X, pady=(0, 20))
@@ -179,11 +178,19 @@ class DictationInterface:
         self.result_text.insert(1.0, result_text)
         self.result_text.config(state = DISABLED)
         
-
-        
+    
     def compare_texts(self, original: str, recognized: str)-> bool:
         return original.strip().lower() == recognized.strip().lower()
-        
+    
+    def _reset_interface(self):
+        self.answer_submitted = False
+        self.answer_input.delete(0, tk.END)
+        self.result_text.config(state=tk.NORMAL)
+        self.result_text.delete(1.0, tk.END)
+        self.result_text.config(state=tk.DISABLED)
+        # 重置按钮文本和状态
+        self.submit_button.config(text="✅ 提交答案", state=tk.NORMAL)
+
 #程序入口
 if __name__ == "__main__":
     try:
