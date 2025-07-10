@@ -1,3 +1,9 @@
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import matplotlib.font_manager as fm
+import numpy as np
+
 from typing import Dict
 from asyncio import set_event_loop
 from os.path import commonpath
@@ -207,6 +213,7 @@ class StatisticsPanel:
     def __init__(self, parent_frame, core: MemorizerCore):
         self.parent_frame = parent_frame
         self.core = core
+        self.canvas = None
         self._create_widgets()
 
     def _create_widgets(self):
@@ -258,16 +265,75 @@ class StatisticsPanel:
         self._create_stat_item(word_frame, "正确率", f"{word_stats.get('accuracy', 0):.1f}%")
     
     def _update_charts(self, stats: Dict):
-        return
+       # 清除旧图表
+        if self.canvas:
+            self.canvas.get_tk_widget().destroy()
+        # 创建matplotlib图表
+        self.figure = Figure(figsize=(12, 6), dpi=100)
+        # 创建子图
+        ax1 = self.figure.add_subplot(121)  # 左上
+        ax2 = self.figure.add_subplot(122)  # 右上
+        # 图1: 单词统计柱状图
+        self._create_word_stats_chart(ax1, stats)
+        
+        # 图2: 单词正确率饼图
+        self._create_word_accuracy_chart(ax2, stats)
+        
+        
+        self.figure.tight_layout()
+        # 嵌入到Tkinter
+        self.canvas = FigureCanvasTkAgg(self.figure, self.chart_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    def _create_word_stats_chart(self, ax, stats:Dict):
+        words = stats.get('words', {})
+        categories = ['Total', 'Reviewed']
+        word_values = [words.get('total', 0), words.get('reviewed', 0)]
+
+        x = np.arange(len(categories))
+
+        ax.bar(x, word_values, color='skyblue', alpha=0.8)
+
+        ax.set_title('Word Learning Statistics')
+        ax.set_xticks(x)
+        ax.set_xticklabels(categories)
+        ax.grid(True, alpha=0.3)
+
+        # 在柱状图上显示数值
+        for i, v in enumerate(word_values):
+            ax.text(i, v + max(word_values) * 0.01, str(v), ha='center', va='bottom')
     
+    def _create_word_accuracy_chart(self, ax, stats: Dict):
+        words = stats.get('words', {})
+
+        word_accuracy = words.get('accuracy', 0)
+        word_reviewed = words.get('reviewed', 0)
+        word_total = words.get('total', 0)
+
+        if word_reviewed > 0:
+            correct_count = round(word_reviewed * word_accuracy / 100)
+            incorrect_count = word_reviewed - correct_count
+            
+            labels = ['correct','incorrect']
+            sizes = [correct_count, incorrect_count]
+            colors = ['lightgreen', 'lightcoral']
+            ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+            ax.set_title(f"word_accuracy ({word_accuracy:.1f}%)")
+
+        else:
+            ax.text(0.5, 0.5,'no_records', ha='center', va='center', 
+                   transform=ax.transAxes, fontsize=12)
+            ax.set_title('word_accuracy')
+    
+
     def _create_stat_item(self, parent, label: str, value):
         item_frame = ttk.Frame(parent)
         item_frame.pack(fill = tk.X, pady = 2)
 
         ttk.Label(item_frame, text = f"{label}:", font = ('Arial', 9)).pack(side=tk.LEFT)
         ttk.Label(item_frame, text = str(value), font = ('Arial', 9, 'bold')).pack(side = tk.RIGHT)
-
-
+    
 
 #程序入口
 if __name__ == "__main__":
