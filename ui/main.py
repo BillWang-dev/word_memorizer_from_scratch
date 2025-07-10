@@ -1,5 +1,8 @@
+from typing import Dict
+from asyncio import set_event_loop
+from os.path import commonpath
 import tkinter as tk
-from tkinter import DISABLED, ttk, messagebox, scrolledtext
+from tkinter import DISABLED, LEFT, RIGHT, Pack, ttk, messagebox, scrolledtext
 import logging
 import sv_ttk
 import sys
@@ -44,6 +47,7 @@ class MainApplication:
         # 统计页面
         self.stats_frame = ttk.Frame(self.notebook) #第二个标签页
         self.notebook.add(self.stats_frame, text="📊 学习统计")
+        self.statistics_panel = StatisticsPanel(self.stats_frame, self.core)
 
     def run(self):
         self.root.mainloop() #是一个循环, 让窗口一直显示
@@ -197,6 +201,72 @@ class DictationInterface:
             self.play_button.config(text="🔊 播放", state=tk.NORMAL)
         self.play_button.config(text = "播放中...", state = tk.DISABLED)
         self.listen_engine.play_text(text_to_play, callback=play_finished)
+
+class StatisticsPanel:
+
+    def __init__(self, parent_frame, core: MemorizerCore):
+        self.parent_frame = parent_frame
+        self.core = core
+        self._create_widgets()
+
+    def _create_widgets(self):
+        control_frame = ttk.Frame(self.parent_frame)
+        control_frame.pack(fill=tk.X, padx = 10, pady= 10)
+
+        ttk.Label(control_frame, text="📊 学习统计", font=('Arial', 14, 'bold')).pack(side = tk.LEFT)
+
+        ttk.Button(control_frame, text="刷新数据", command = self.refresh_data).pack(side = tk.RIGHT)
+        
+        # 数据显示区域
+        self.stats_frame = ttk.LabelFrame(self.parent_frame, text="概览统计", padding="10")
+        self.stats_frame.pack(fill=tk.X, padx = 10, pady = (0, 10))
+        
+        # 图表显示区域
+        self.chart_frame = ttk.LabelFrame(self.parent_frame, text="数据图表", padding="10")
+        self.chart_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        
+        self.refresh_data()
+        
+    def _button_clicked(self, button_name: str): # 没有任何实际功能
+        print(f"'{button_name}' 按钮被点击了")
+    
+    def refresh_data(self):
+        try:
+            stats = self.core.get_overall_stats()
+            session_stats = self.core.get_session_stats()
+            
+            # 更新概览统计
+            self._update_overview(stats, session_stats)
+            
+            # 更新图表
+            self._update_charts(stats)
+        except Exception as e:
+            logger.error(f"刷新统计数据失败: {e}")
+            messagebox.showerror("错误", f"刷新数据失败: {e}")
+    
+    def _update_overview(self, stats: Dict, session_stats: Dict):
+        # 清除旧的统计显示
+        for widget in self.stats_frame.winfo_children():
+            widget.destroy()
+        word_frame = ttk.LabelFrame(self.stats_frame, text = "单词统计", padding = "10")
+        word_frame.pack(side = tk.LEFT, fill = tk.BOTH, expand = True, padx = (10, 5))
+        
+        word_stats = stats.get('words', {})
+        
+        self._create_stat_item(word_frame, "总数", word_stats.get('total', 0))
+        self._create_stat_item(word_frame, "已复习", word_stats.get('reviewed', 0))
+        self._create_stat_item(word_frame, "正确率", f"{word_stats.get('accuracy', 0):.1f}%")
+    
+    def _update_charts(self, stats: Dict):
+        return
+    
+    def _create_stat_item(self, parent, label: str, value):
+        item_frame = ttk.Frame(parent)
+        item_frame.pack(fill = tk.X, pady = 2)
+
+        ttk.Label(item_frame, text = f"{label}:", font = ('Arial', 9)).pack(side=tk.LEFT)
+        ttk.Label(item_frame, text = str(value), font = ('Arial', 9, 'bold')).pack(side = tk.RIGHT)
+
 
 
 #程序入口
